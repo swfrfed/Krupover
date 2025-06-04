@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krupover - Интерфейс (Slightly Better Raw)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Monoton&family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --dark-abyss: #0a0018;
+            --deep-violet: #22003b;
+            --neo-magenta: #ff00aa;
+            --vaporwave-pink: #d00050;
+            --cyber-blue: #008bcd;
+            --ghost-white: #d8d8d8;
+            --fade-grey: #999999;
+            --dark-glow: rgba(255, 0, 170, 0.25); /* Slightly more noticeable glow */
+            --shadow-alpha: rgba(0, 0, 0, 0.55);
+            --glass-base: rgba(255, 255, 255, 0.04);
+            --glass-border-subtle: rgba(255, 255, 255, 0.1);
+            --tiktok-brand: #fe2c55;
+            --telegram-brand: #0088cc;
+            --instagram-brand: #c13584;
+            --transition-quick: 0.2s; /* Smoother quick transition */
+            --transition-smooth: 0.3s; /* Smoother smooth transition */
+            --transition-slow-bounce: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1); /* Subtle bounce */
+            --hover-elevate: -4px;
+            --hover-expand: 1.02;
+            --particle-aura: rgba(255, 0, 170, 0.35);
+            --line-fade: rgba(255, 0, 170, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        html {
+            scroll-behavior: smooth; /* Re-enabled smooth scroll */
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark-abyss) 0%, var(--deep-violet) 100%); /* Subtle gradient back */
+            color: var(--ghost-white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-x: hidden;
+            position: relative;
+            cursor: none; /* Custom cursor will be very simple */
+        }
+
+        .preloader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--dark-abyss);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10000;
+            opacity: 1;
+            transition: opacity 0.8s ease-out 0.5s; /* More graceful fade */
+            pointer-events: all;
+        }
+
+        .preloader-symbol {
+            font-family: 'Monoton', cursive;
+            font-size: 6.5rem;
+            color: var(--neo-magenta);
+            animation: preloaderDistort 3s infinite ease-in-out, preloaderFadeIn 1.2s ease-out forwards;
+            text-shadow: 0 0 10px var(--neo-magenta), 0 0 20px var(--dark-glow); /* Subtle shadow */
+            position: relative;
+        }
+        /* Removed clashing pseudo-elements for preloader symbol for a cleaner look */
+        .preloader-symbol::before, .preloader-symbol::after { display: none; }
+
+
+        @keyframes preloaderDistort { /* Smoother distortion */
+            0%, 100% { transform: scale(0.95) rotateZ(-1deg); opacity: 0.8; }
+            50% { transform: scale(1.05) rotateZ(1deg); opacity: 1; }
+        }
+        @keyframes preloaderFadeIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        body.loaded .preloader {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .background-particles-grid { /* Particles re-enabled, but will be very sparse */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none; overflow: hidden;
+            /* background: radial-gradient(circle at center, rgba(255, 0, 170, 0.03) 0%, transparent 70%); */
+        }
+        .particle-orb { /* For JS particles */
+            position: absolute; border-radius: 50%; opacity: 0;
+            transition: opacity 0.7s ease;
+            filter: blur(0.5px); /* Very slight blur */
+            box-shadow: 0 0 3px var(--particle-aura); /* Minimal shadow */
+        }
+        .connecting-thread { /* For JS particle connections */
+            position: absolute; height: 1px; background: var(--line-fade);
+            opacity: 0; transform-origin: 0 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 0 2px var(--line-fade);
+        }
+
+
+        .main-stage-container {
+            text-align: center; padding: 2.5rem 1.5rem; max-width: 920px; width: 94%;
+            position: relative; z-index: 1; margin-top: 40px; margin-bottom: 40px;
+        }
+
+        .profile-pic, #main-header-zone, .sub-tagline, .action-matrix > .call-to-action-btn, .about-portal, footer {
+            opacity: 0;
+            transform: translateY(25px) scale(0.98); /* Slightly smoother entry */
+            transition: opacity 0.9s ease-out, transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        body.loaded .profile-pic { transition-delay: 0.3s; opacity: 1; transform: translateY(0) scale(1); }
+        body.loaded #main-header-zone { transition-delay: 0.5s; opacity: 1; transform: translateY(0) scale(1); }
+        body.loaded .sub-tagline { transition-delay: 0.7s; opacity: 1; transform: translateY(0) scale(1); }
+        body.loaded .action-matrix .call-to-action-btn { transition-delay: 0.9s; opacity: 1; transform: translateY(0) scale(1); }
+        body.loaded .about-portal { transition-delay: 1.1s; opacity: 1; transform: translateY(0) scale(1); }
+        body.loaded footer { transition-delay: 1.3s; opacity: 1; transform: translateY(0) scale(1); }
+
+        .profile-pic {
+            width: 120px; height: 120px;
+            border-radius: 50%; /* Back to round */
+            margin: 0 auto 2rem;
+            border: 4px solid var(--neo-magenta);
+            box-shadow: 0 0 15px var(--dark-glow), 0 0 30px var(--dark-glow); /* Softer glow */
+            background: var(--deep-violet);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; font-weight: 700; font-family: 'Monoton', cursive;
+            animation: profileGlowPulse 4s infinite alternate ease-in-out;
+            text-shadow: 0 0 8px var(--neo-magenta);
+        }
+
+        @keyframes profileGlowPulse {
+            from { box-shadow: 0 0 10px var(--dark-glow), 0 0 20px var(--dark-glow); transform: scale(0.97); }
+            to { box-shadow: 0 0 20px var(--dark-glow), 0 0 40px var(--dark-glow); transform: scale(1.03); }
+        }
+
+        #main-header-zone { display: inline-block; margin-bottom: 0.8rem; }
+
+        h1 {
+            font-size: 3.2rem; color: var(--ghost-white);
+            text-transform: uppercase; /* Uppercase back */
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 8px rgba(224, 224, 224, 0.4); /* Softer text shadow */
+            line-height: 1.1; position: relative;
+        }
+
+        h1 .header-gradient { /* Subtle gradient */
+            background: linear-gradient(90deg, var(--neo-magenta) 20%, var(--vaporwave-pink) 80%);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+
+        h1 .type-indicator {
+            display: inline-block; width: 4px; height: 3rem;
+            background-color: var(--neo-magenta);
+            box-shadow: 0 0 5px var(--neo-magenta); /* Subtle glow */
+            animation: blinkTypeIndicator 0.8s infinite steps(1);
+            position: absolute; right: -10px; bottom: 0px;
+        }
+
+        @keyframes blinkTypeIndicator {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .glitch-active h1 { animation: chaoticGlitchMain 0.2s linear infinite alternate; }
+        .glitch-active h1::before, .glitch-active h1::after {
+            content: attr(data-text); position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .glitch-active h1::before { /* Slightly more structured glitch */
+            left: 2px; text-shadow: -1px 0 var(--vaporwave-pink);
+            clip-path: inset(60% 0 15% 0); animation: glitchLayerA 0.4s infinite alternate-reverse .1s;
+            opacity: 0.7;
+        }
+        .glitch-active h1::after {
+            left: -2px; text-shadow: 1px 0 var(--cyber-blue);
+            clip-path: inset(20% 0 55% 0); animation: glitchLayerB 0.4s infinite alternate-reverse;
+            opacity: 0.7;
+        }
+
+        @keyframes chaoticGlitchMain {
+            0%, 100% { transform: translate(0,0) skew(0deg); }
+            25% { transform: translate(-2px, 1px) skew(-0.5deg); }
+            50% { transform: translate(1px, -1px) skew(0.3deg); }
+            75% { transform: translate(2px, 0px) skew(0.5deg); }
+        }
+        @keyframes glitchLayerA {
+            0%, 100% { clip-path: inset(60% 0 15% 0); } 50% { clip-path: inset(10% 0 60% 0); }
+        }
+        @keyframes glitchLayerB {
+            0%, 100% { clip-path: inset(20% 0 55% 0); } 50% { clip-path: inset(50% 0 20% 0); }
+        }
+
+
+        .sub-tagline {
+            font-size: 1.2rem; margin-bottom: 2.5rem; color: var(--fade-grey);
+            letter-spacing: 0.8px; text-shadow: 0 0 4px rgba(153,153,153,0.3);
+            font-weight: 300; padding: 0 10px; line-height: 1.4;
+        }
+
+        .action-matrix { display: flex; flex-direction: column; gap: 1.2rem; width: 100%; max-width: 450px; margin: 0 auto; }
+
+        .call-to-action-btn {
+            padding: 1rem 1.2rem; border-radius: 25px; /* Rounded again */
+            text-decoration: none; /* No underline */
+            color: var(--ghost-white); font-weight: 600; font-size: 1.1rem;
+            transition: all var(--transition-smooth); /* Smoother transition */
+            position: relative; overflow: hidden;
+            border: 2px solid var(--glass-border-subtle); /* Slightly thicker border */
+            background: var(--glass-base);
+            backdrop-filter: blur(5px) saturate(1.2); /* Subtle glass */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3), inset 0 0 3px rgba(255,255,255,0.05); /* Softer shadow */
+            letter-spacing: 0.5px; text-transform: uppercase; text-shadow: 0 0 2px rgba(255,255,255,0.2);
+        }
+
+        .call-to-action-btn:hover {
+            transform: translateY(var(--hover-elevate)) scale(var(--hover-expand));
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4), inset 0 0 5px rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .call-to-action-btn::before { /* Very subtle shine */
+            content: ''; position: absolute; top: -50%; left: -150%;
+            width: 50%; height: 200%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: skewX(-30deg); transition: left 0.7s ease-out; display: block; /* Re-enabled */
+        }
+        .call-to-action-btn:hover::before { left: 150%; }
+
+        .btn-tiktok:hover { background: rgba(var(--tiktok-brand), 0.3); border-color: var(--tiktok-brand); }
+        .btn-telegram:hover { background: rgba(var(--telegram-brand), 0.3); border-color: var(--telegram-brand); }
+        .btn-instagram:hover { background: rgba(var(--instagram-brand), 0.3); border-color: var(--instagram-brand); }
+
+        .btn-icon {
+            margin-right: 10px; font-size: 1.5rem;
+            transition: transform 0.3s ease, opacity 0.3s ease; /* Transition for icon */
+            text-shadow: none; opacity: 0.8;
+        }
+        .call-to-action-btn:hover .btn-icon { transform: scale(1.1); opacity: 1; }
+        /* No complex brand-specific icon animations */
+
+
+        .about-portal {
+            background: rgba(var(--deep-violet), 0.75); /* Slightly more opaque */
+            backdrop-filter: blur(3px) brightness(1.05); /* Very subtle blur */
+            border-radius: 10px; padding: 2rem; margin-top: 3.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.35);
+            text-align: left; width: 100%; max-width: 750px;
+            border: 1px solid rgba(255,255,255,0.12); position: relative; overflow: hidden;
+        }
+        .about-portal::before { display: none; } /* No animated border */
+
+        .about-portal h2 {
+            font-size: 2rem; color: var(--neo-magenta); margin-bottom: 1.2rem;
+            border-bottom: 2px solid var(--vaporwave-pink); padding-bottom: 0.6rem;
+            display: inline-block; /* Back to inline-block for border to fit content */
+            text-shadow: 0 0 5px var(--dark-glow); font-weight: 700;
+            letter-spacing: 0.6px; transform: none;
+        }
+        .about-portal h2::after { display: none; } /* No extra underline accent */
+
+        .about-portal p {
+            font-size: 1rem; line-height: 1.6; color: var(--ghost-white);
+            margin-bottom: 1.2rem; text-align: justify; /* Justify for a bit more structure */
+            text-shadow: 0 0 2px rgba(0,0,0,0.4); letter-spacing: 0.15px;
+        }
+        
+
+        /* Styles for data-archive-section and dossier (if re-added) will also be less polished */
+        .data-archive-section {
+            background: rgba(var(--deep-violet), 0.7); backdrop-filter: blur(2px);
+            border-radius: 10px; padding: 2rem; margin-top: 3.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12);
+        }
+        .data-archive-section::before { display: none; }
+        .data-archive-section h2 {
+            font-size: 2rem; color: var(--neo-magenta); margin-bottom: 1.2rem;
+            border-bottom: 2px solid var(--cyber-blue); padding-bottom: 0.6rem;
+            text-shadow: 0 0 5px var(--dark-glow); font-weight: 700;
+        }
+        .data-archive-section h2::after { display: none; }
+        .dossier-grid-layout { gap: 1.5rem; margin-top: 2rem; }
+        .dossier-record {
+            background: rgba(255, 255, 255, 0.03); padding: 1.2rem; border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .dossier-record:hover { transform: translateY(-3px); background: rgba(255,255,255,0.05); }
+        .dossier-record::before { display:none; }
+        .dossier-record i { font-size: 2.5rem; color: var(--neo-magenta); margin-bottom: 1rem; text-shadow: none; }
+        .dossier-record:hover i { color: var(--vaporwave-pink); }
+        .dossier-record h3 { font-size: 1.2rem; color: #eee; margin-bottom: 0.6rem; font-weight: 600; }
+        .dossier-record p { font-size: 0.9rem; color: var(--fade-grey); line-height: 1.5; }
+
+
+        footer {
+            margin-top: 4rem; padding: 1.5rem 0; font-size: 0.9rem;
+            color: var(--fade-grey); text-shadow: 0 0 2px rgba(0,0,0,0.3);
+            border-top: 1px solid rgba(255,255,255,0.08); width: 100%; text-align: center;
+            background: rgba(0,0,0,0.15); opacity: 0.9;
+            transition: background-color 0.3s, opacity 0.3s;
+        }
+        footer:hover { opacity: 1; background: rgba(0,0,0,0.2); }
+        footer a {
+            color: var(--ghost-white); text-decoration: none;
+            border-bottom: 1px dotted rgba(224, 224, 224, 0.4);
+            font-weight: 500; transition: color 0.2s, border-bottom-color 0.2s;
+        }
+        footer a:hover { color: var(--neo-magenta); border-bottom-color: var(--neo-magenta); }
+
+        .custom-cursor { /* Very simple custom cursor */
+            position: fixed; width: 8px; height: 8px;
+            border-radius: 50%; background: var(--neo-magenta);
+            pointer-events: none; transform: translate(-50%, -50%);
+            z-index: 9999; transition: transform 0.1s ease-out, background-color 0.2s;
+            mix-blend-mode: difference; /* Keeps a slightly "off" feel */
+            opacity: 0.7;
+        }
+        .custom-cursor.interactive-hover { /* Subtle hover for cursor */
+            transform: translate(-50%, -50%) scale(2.5);
+            background: var(--vaporwave-pink);
+            opacity: 1;
+        }
+
+
+        #return-to-top-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            background: rgba(var(--neo-magenta), 0.5); color: var(--ghost-white);
+            border: 1px solid rgba(var(--neo-magenta),0.7); border-radius: 50%; /* Round again */
+            width: 45px; height: 45px; font-size: 1.8rem;
+            cursor: pointer; opacity: 0; visibility: hidden;
+            transition: opacity 0.4s, visibility 0.4s, background-color 0.3s, transform 0.3s;
+            box-shadow: 0 0 10px rgba(var(--neo-magenta), 0.3);
+            z-index: 9000;
+        }
+        #return-to-top-btn:hover {
+            background: rgba(var(--neo-magenta), 0.7);
+            transform: scale(1.1);
+        }
+        #return-to-top-btn.is-visible { opacity: 0.7; visibility: visible; }
+        #return-to-top-btn.is-visible:hover { opacity: 1;}
+
+
+        .ripple-pulse-effect { display: none; } /* Ripple effect remains off */
+        
+
+        @media (max-width: 1024px) {
+            h1 { font-size: 2.8rem; }
+            .profile-pic { width: 110px; height: 110px; font-size: 2.5rem; }
+            .sub-tagline { font-size: 1.1rem; }
+            .about-portal { padding: 1.8rem; }
+        }
+
+        @media (max-width: 768px) {
+            .main-stage-container { padding: 2rem 1rem; }
+            .profile-pic { width: 90px; height: 90px; font-size: 2.2rem; }
+            h1 { font-size: 2.2rem; letter-spacing: 1px; }
+            .sub-tagline { font-size: 1rem; margin-bottom: 2rem; }
+            .call-to-action-btn { font-size: 1rem; padding: 0.8rem 1rem; }
+            .btn-icon { font-size: 1.2rem; margin-right: 8px; }
+            .about-portal { padding: 1.5rem; margin-top: 2.5rem; }
+            .about-portal h2 { font-size: 1.7rem; }
+            .about-portal p { font-size: 0.9rem; line-height: 1.5; }
+            #return-to-top-btn { width: 40px; height: 40px; font-size: 1.5rem; bottom: 15px; right: 15px; }
+            .custom-cursor { display: none; } /* Still hide custom cursor on smaller mobile for usability */
+        }
+
+        @media (max-width: 576px) {
+            .profile-pic { width: 70px; height: 70px; font-size: 1.8rem; margin-bottom: 1.5rem; }
+            h1 { font-size: 2rem; }
+            .sub-tagline { font-size: 0.9rem; margin-bottom: 1.5rem; }
+            .action-matrix { gap: 1rem; }
+            .call-to-action-btn { font-size: 0.9rem; }
+            .btn-icon { font-size: 1.1rem; }
+            .about-portal { padding: 1rem; margin-top: 2rem; }
+            .about-portal h2 { font-size: 1.5rem; }
+            .about-portal p { font-size: 0.85rem; line-height: 1.4; }
+            footer { margin-top: 2.5rem; font-size: 0.8rem; padding: 1rem 0;}
+        }
+
+    </style>
+</head>
+<body>
+    <div class="preloader">
+        <div class="preloader-symbol">K</div>
+    </div>
+
+    <div class="custom-cursor"></div>
+
+    <div class="background-particles-grid" id="particles-container-main"></div>
+
+    <div class="main-stage-container" id="content-core">
+        <div class="profile-pic">K</div>
+
+        <div id="main-header-zone" data-text="Krupover">
+            <h1 id="brand-title"><span class="header-gradient">Krupover</span><span class="type-indicator"></span></h1>
+        </div>
+
+        <p class="sub-tagline">
+            Это не просто сайт. Это интерфейс.
+        </p>
+
+        <div class="action-matrix">
+            <a href="https://www.tiktok.com/@krupover" target="_blank" rel="noopener noreferrer" class="call-to-action-btn btn-tiktok">
+                <span class="btn-icon"><i class="fab fa-tiktok"></i></span>
+                <span>TikTok Канал</span>
+            </a>
+            <a href="https://t.me/+C_v7Jo2vMz5lYTYy" target="_blank" rel="noopener noreferrer" class="call-to-action-btn btn-telegram">
+                <span class="btn-icon"><i class="fab fa-telegram-plane"></i></span>
+                <span>Telegram Сообщество</span>
+            </a>
+            <a href="https://www.instagram.com/krupover?igsh=MTc1aWNjMXo3NnFxbA==" target="_blank" rel="noopener noreferrer" class="call-to-action-btn btn-instagram">
+                <span class="btn-icon"><i class="fab fa-instagram"></i></span>
+                <span>Instagram Профиль</span>
+            </a>
+        </div>
+
+  
+       
+        <footer>
+            <p>
+                &copy; 2025 Krupover. Все права защищены.
+                <span style="font-size: 0.8em; opacity: 0.8; margin-left: 8px;"></span>
+            </p>
+            <p style="font-size: 0.85em; opacity: 0.7; margin-top: 8px;">
+                <a href="#about-section">О Проекте</a> 
+            </p>
+        </footer>
+    </div>
+
+    <button id="return-to-top-btn" title="Вернуться к началу">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadDelay = 500; 
+            const bodyElement = document.body;
+            const customCursor = document.querySelector('.custom-cursor');
+            
+            const mainTitleWrapper = document.getElementById('main-header-zone');
+            const titleTextDisplay = mainTitleWrapper ? mainTitleWrapper.querySelector('#brand-title .header-gradient') : null;
+            const typeCaretIndicator = mainTitleWrapper ? mainTitleWrapper.querySelector('#brand-title .type-indicator') : null;
+            
+            const particlesBackground = document.getElementById('particles-container-main');
+            const particleCount = 20; // Sparse particles
+            const connectionThreshold = 150;
+            const maxConnectionsPerParticle = 2; // Few connections
+            let particleInstances = [];
+            let connectionLinePool = [];
+            const maxLineElements = particleCount * maxConnectionsPerParticle;
+
+
+            const fullBrandText = "Krupover"; 
+            let textWriteIndex = 0;
+
+            if (!mainTitleWrapper || !titleTextDisplay || !typeCaretIndicator) {
+                return;
+            }
+            
+            setTimeout(() => {
+                bodyElement.classList.add('loaded');
+                setTimeout(initiateTypeSequence, 300); // Typing sequence re-enabled
+            }, loadDelay);
+
+            if (customCursor) { // Custom cursor re-enabled
+                document.addEventListener('mousemove', (event) => {
+                    customCursor.style.left = event.clientX + 'px';
+                    customCursor.style.top = event.clientY + 'px';
+                });
+                document.querySelectorAll('a, button, .call-to-action-btn').forEach(el => {
+                    el.addEventListener('mouseenter', () => customCursor.classList.add('interactive-hover'));
+                    el.addEventListener('mouseleave', () => customCursor.classList.remove('interactive-hover'));
+                });
+            }
+            
+            // Simplified Particle System
+            if (particlesBackground && window.innerWidth > 768) { // Only on larger screens
+                function generateConnectionLine() {
+                    const line = document.createElement('div');
+                    line.classList.add('connecting-thread');
+                    particlesBackground.appendChild(line);
+                    return line;
+                }
+
+                for(let i = 0; i < maxLineElements; i++) {
+                    connectionLinePool.push(generateConnectionLine());
+                }
+
+                class OrbParticle {
+                    constructor() {
+                        this.htmlElement = document.createElement('div');
+                        this.htmlElement.classList.add('particle-orb');
+                        particlesBackground.appendChild(this.htmlElement);
+
+                        this.posX = Math.random() * window.innerWidth;
+                        this.posY = Math.random() * window.innerHeight;
+                        this.dim = Math.random() * 2 + 1; // Very small particles
+                        this.velocityX = (Math.random() - 0.5) * 0.3; // Very slow
+                        this.velocityY = (Math.random() - 0.5) * 0.3;
+                        
+                        this.colorValue = `rgba(${Math.floor(Math.random()*55 + 200)},0,${Math.floor(Math.random()*55 + 200)},${Math.random() * 0.3 + 0.2})`;
+
+
+                        this.htmlElement.style.width = `${this.dim}px`;
+                        this.htmlElement.style.height = `${this.dim}px`;
+                        this.htmlElement.style.background = this.colorValue;
+                        this.htmlElement.style.left = `${this.posX}px`;
+                        this.htmlElement.style.top = `${this.posY}px`;
+                        
+                        setTimeout(() => { this.htmlElement.style.opacity = '1'; }, Math.random() * 800 + loadDelay + 200);
+                    }
+
+                    updatePosition() {
+                        this.posX += this.velocityX;
+                        this.posY += this.velocityY;
+
+                        if (this.posX < -this.dim*2) this.posX = window.innerWidth + this.dim;
+                        else if (this.posX > window.innerWidth + this.dim*2) this.posX = -this.dim;
+                        if (this.posY < -this.dim*2) this.posY = window.innerHeight + this.dim;
+                        else if (this.posY > window.innerHeight + this.dim*2) this.posY = -this.dim;
+
+                        this.htmlElement.style.left = `${this.posX}px`;
+                        this.htmlElement.style.top = `${this.posY}px`;
+                    }
+                }
+
+                function initializeOrbs() {
+                    for (let i = 0; i < particleCount; i++) {
+                        particleInstances.push(new OrbParticle());
+                    }
+                }
+                
+                function renderOrbConnections() {
+                    let lineIndex = 0;
+                    for (let i = 0; i < particleInstances.length; i++) {
+                        let connectionsMade = 0;
+                        for (let j = i + 1; j < particleInstances.length; j++) {
+                            if (connectionsMade >= maxConnectionsPerParticle) break;
+                            const deltaX = particleInstances[i].posX - particleInstances[j].posX;
+                            const deltaY = particleInstances[i].posY - particleInstances[j].posY;
+                            const euclideanDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                            if (euclideanDistance < connectionThreshold) {
+                                if (lineIndex < maxLineElements) {
+                                    const lineElement = connectionLinePool[lineIndex++];
+                                    lineElement.style.left = `${particleInstances[i].posX}px`;
+                                    lineElement.style.top = `${particleInstances[i].posY}px`;
+                                    lineElement.style.width = `${euclideanDistance}px`;
+                                    lineElement.style.transform = `rotate(${Math.atan2(deltaY, deltaX) * 180 / Math.PI}deg)`;
+                                    lineElement.style.opacity = `${(1 - (euclideanDistance / connectionThreshold) * 0.8) * 0.5}`;
+                                    connectionsMade++;
+                                }
+                            }
+                        }
+                    }
+                    for (let i = lineIndex; i < maxLineElements; i++) {
+                        connectionLinePool[i].style.opacity = '0';
+                    }
+                }
+
+                function animateOrbsFrame() {
+                    for (let i = 0; i < particleInstances.length; i++) {
+                        particleInstances[i].updatePosition();
+                    }
+                    renderOrbConnections();
+                    requestAnimationFrame(animateOrbsFrame);
+                }
+                initializeOrbs();
+                animateOrbsFrame();
+            } else if (particlesBackground) {
+                 particlesBackground.style.display = 'none'; // Ensure it's hidden if not initialized
+            }
+
+
+            function initiateTypeSequence() {
+                const typeInterval = 120; 
+                titleTextDisplay.innerHTML = ''; // Clear static text for typing
+                const typeAction = () => {
+                    if (textWriteIndex < fullBrandText.length) {
+                        titleTextDisplay.innerHTML += fullBrandText.charAt(textWriteIndex);
+                        textWriteIndex++;
+                        setTimeout(typeAction, typeInterval);
+                    } else {
+                        if(typeCaretIndicator) {
+                            typeCaretIndicator.style.animation = 'none'; 
+                            typeCaretIndicator.style.opacity = '0'; 
+                        }
+                        setTimeout(triggerGlitchEffect, 400); 
+                    }
+                };
+                typeAction();
+            }
+            
+            function triggerGlitchEffect() {
+                if (mainTitleWrapper) {
+                    mainTitleWrapper.setAttribute('data-text', fullBrandText); 
+                    mainTitleWrapper.classList.add('glitch-active');
+                    setTimeout(() => {
+                        mainTitleWrapper.classList.remove('glitch-active');
+                    }, 800); 
+                }
+            }
+
+            const backToTopButton = document.getElementById('return-to-top-btn');
+            if (backToTopButton) {
+                window.addEventListener('scroll', () => {
+                    if (window.scrollY > 300) { 
+                        backToTopButton.classList.add('is-visible');
+                    } else {
+                        backToTopButton.classList.remove('is-visible');
+                    }
+                });
+
+                backToTopButton.addEventListener('click', () => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                });
+            }
+
+            document.querySelectorAll('footer a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
